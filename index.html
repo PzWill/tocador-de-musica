@@ -2,7 +2,9 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Experiência 3D Ultimate (Modular + DB)</title>
+    <!-- Viewport essencial para Mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Experiência 3D Ultimate Mobile (V15)</title>
     <style>
         /* --- ESTILOS GERAIS --- */
         body {
@@ -11,6 +13,7 @@
             background-color: #000;
             font-family: 'Courier New', Courier, monospace;
             user-select: none;
+            -webkit-tap-highlight-color: transparent; /* Remove flash azul no toque mobile */
         }
 
         /* TÍTULO E MENSAGENS */
@@ -23,6 +26,9 @@
             z-index: 5;
             pointer-events: none;
             transition: opacity 0.5s;
+            width: 100%;
+            padding: 0 20px;
+            box-sizing: border-box;
         }
 
         h1 {
@@ -33,6 +39,7 @@
             margin: 0;
             text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
             mix-blend-mode: difference;
+            word-break: break-word; /* Quebra linha no mobile se for muito grande */
         }
 
         p {
@@ -58,7 +65,7 @@
             padding: 0 40px;
             box-sizing: border-box;
             gap: 15px;
-            opacity: 0; /* Começa escondido até carregar áudio */
+            opacity: 0;
             transition: opacity 0.5s;
         }
 
@@ -68,6 +75,7 @@
             color: #00ff88;
             width: 40px;
             height: 40px;
+            min-width: 40px; /* Impede encolher no mobile */
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -75,12 +83,12 @@
             cursor: pointer;
             font-size: 1.2rem;
             transition: 0.2s;
-            padding-left: 4px; /* Ajuste visual ícone play */
+            padding-left: 4px;
         }
         
         .player-control-btn.paused { padding-left: 0; }
 
-        .player-control-btn:hover {
+        .player-control-btn:hover, .player-control-btn:active {
             background: #00ff88;
             color: black;
             box-shadow: 0 0 15px #00ff88;
@@ -99,7 +107,7 @@
             flex-grow: 1;
             max-width: 800px;
             position: relative;
-            height: 20px;
+            height: 40px; /* Área de toque maior */
             display: flex;
             align-items: center;
         }
@@ -115,21 +123,17 @@
             transition: height 0.2s;
         }
 
-        #progress-slider:hover { height: 6px; background: #444; }
-
+        /* Bolinha do slider maior para dedos */
         #progress-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
+            width: 20px; /* Maior para toque */
+            height: 20px;
             background: #00ff88;
             border-radius: 50%;
             cursor: pointer;
             box-shadow: 0 0 10px #00ff88;
-            transition: transform 0.1s;
-            margin-top: -4px; 
+            margin-top: -8px; 
         }
-
-        #progress-slider::-webkit-slider-thumb:hover { transform: scale(1.5); }
 
         /* --- SIDEBAR (MENU) --- */
         #sidebar {
@@ -142,9 +146,10 @@
             backdrop-filter: blur(10px);
             border-right: 1px solid #00ff88;
             transform: translateX(-100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.3s ease-out;
             z-index: 60;
             padding: 20px;
+            padding-top: 60px; /* Espaço para o botão de fechar */
             box-sizing: border-box;
             overflow-y: auto;
             display: flex;
@@ -157,16 +162,13 @@
             box-shadow: 10px 0 50px rgba(0, 255, 136, 0.2);
         }
 
-        #sidebar::-webkit-scrollbar { width: 5px; }
-        #sidebar::-webkit-scrollbar-track { background: #111; }
-        #sidebar::-webkit-scrollbar-thumb { background: #00ff88; }
-
+        /* Menu Toggle Button */
         #menu-toggle {
             position: absolute;
             top: 20px;
             left: 20px;
             z-index: 70;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             border: 1px solid #00ff88;
             color: #00ff88;
             padding: 10px 15px;
@@ -176,74 +178,75 @@
             border-radius: 5px;
         }
 
-        #menu-toggle:hover { background: #00ff88; color: black; box-shadow: 0 0 15px #00ff88; }
+        #menu-toggle:hover, #menu-toggle:active { 
+            background: #00ff88; color: black; box-shadow: 0 0 15px #00ff88; 
+        }
 
-        /* Estilos de Controles do Sidebar */
+        /* Estilos de Controles */
         .control-group { border-bottom: 1px solid #333; padding-bottom: 15px; }
         .control-group h3 {
             color: #fff; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 10px;
             border-left: 3px solid #00ff88; padding-left: 10px;
         }
         
-        .control-row { display: flex; flex-direction: column; margin-bottom: 12px; }
+        .control-row { display: flex; flex-direction: column; margin-bottom: 15px; }
         
         .control-row label {
-            color: #ccc; font-size: 0.75rem; margin-bottom: 5px;
+            color: #ccc; font-size: 0.85rem; margin-bottom: 8px;
             display: flex; justify-content: space-between; align-items: center;
         }
 
-        input[type=checkbox] { accent-color: #00ff88; width: 16px; height: 16px; cursor: pointer; }
-
-        .sidebar-btn {
-            width: 100%; padding: 10px; margin-top: 5px; background: transparent;
-            border: 1px solid #00ff88; color: #00ff88; cursor: pointer;
-            text-transform: uppercase; font-family: inherit; transition: 0.2s;
-            font-weight: bold; font-size: 0.8rem;
-        }
-        .sidebar-btn:hover { background: #00ff88; color: black; }
+        /* Inputs maiores para mobile */
+        input[type=checkbox] { accent-color: #00ff88; width: 20px; height: 20px; cursor: pointer; }
         
-        .btn-row { display: flex; gap: 10px; }
-        .btn-small { padding: 5px 10px; font-size: 0.7rem; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 22px; width: 22px; border-radius: 50%;
+            background: #00ff88; margin-top: -9px; box-shadow: 0 0 5px #00ff88;
+        }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #333; border-radius: 2px; }
 
         select {
             background: #111; color: #00ff88; border: 1px solid #00ff88;
-            padding: 8px; width: 100%; font-family: inherit; cursor: pointer;
+            padding: 10px; width: 100%; font-family: inherit; cursor: pointer; font-size: 1rem;
         }
 
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer; }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
-            background: #00ff88; margin-top: -5px; box-shadow: 0 0 5px #00ff88;
+        .sidebar-btn {
+            width: 100%; padding: 12px; margin-top: 5px; background: transparent;
+            border: 1px solid #00ff88; color: #00ff88; cursor: pointer;
+            text-transform: uppercase; font-family: inherit; transition: 0.2s;
+            font-weight: bold; font-size: 0.9rem;
         }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #333; border-radius: 2px; }
+        .sidebar-btn:hover, .sidebar-btn:active { background: #00ff88; color: black; }
+        
+        .btn-row { display: flex; gap: 10px; }
+        .btn-small { padding: 8px; font-size: 0.8rem; }
 
         .sub-control { margin-left: 10px; border-left: 1px solid #444; padding-left: 10px; margin-top: 5px; }
         .chaos-title { color: #ff0055 !important; border-left-color: #ff0055 !important; text-shadow: 0 0 5px #ff0055; }
 
-        /* ABAS (TABS) */
+        /* Tabs */
         .tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid #333; }
-        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #666; background: #111; font-size: 0.8rem; font-weight: bold; }
+        .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; color: #666; background: #111; font-size: 0.9rem; font-weight: bold; }
         .tab.active { color: black; background: #00ff88; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* LISTAS DA BIBLIOTECA */
+        /* Library */
         .library-list {
-            max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.5);
+            max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.5);
             border: 1px solid #333; margin-top: 10px;
         }
         .library-item {
-            padding: 8px; border-bottom: 1px solid #222; font-size: 0.7rem; color: #ccc;
+            padding: 12px; border-bottom: 1px solid #222; font-size: 0.8rem; color: #ccc;
             cursor: pointer; display: flex; justify-content: space-between; align-items: center;
         }
-        .library-item:hover { background: #00ff88; color: black; }
-        .delete-btn { color: #ff0055; font-weight: bold; padding: 0 5px; }
-        .delete-btn:hover { background: white; border-radius: 50%; }
+        .delete-btn { color: #ff0055; font-weight: bold; padding: 5px 10px; }
 
-        /* UI DE CARREGAMENTO & ERRO */
+        /* Loading & Error */
         #loading-container {
             position: fixed; bottom: 100px; right: 20px; width: 250px; z-index: 100;
-            display: none; font-family: 'Courier New', Courier, monospace;
+            display: none;
         }
         #loading-text { color: #00ff88; font-size: 0.8rem; margin-bottom: 5px; text-align: left; }
         #loading-bar-bg { width: 100%; height: 4px; background: #333; border-radius: 2px; }
@@ -252,15 +255,24 @@
         #error-message {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.9); border: 1px solid #ff0055; color: #ff0055;
-            padding: 20px 30px; z-index: 200; text-align: center; display: none;
-            box-shadow: 0 0 30px rgba(255, 0, 85, 0.3); border-radius: 5px; font-size: 0.9rem; max-width: 80%;
+            padding: 20px; z-index: 200; text-align: center; display: none;
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.3); border-radius: 5px; font-size: 0.9rem; width: 80%;
         }
         #error-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
 
         .hidden-input { display: none; }
+
+        /* --- MEDIA QUERIES PARA MOBILE --- */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; letter-spacing: 0.2rem; }
+            #sidebar { width: 100%; } /* Menu ocupa tela toda no mobile */
+            #player-bar { padding: 0 15px; height: 70px; gap: 10px; }
+            .time-display { font-size: 0.7rem; min-width: 35px; }
+            /* Aumentar botões para dedos */
+            #menu-toggle { padding: 12px 18px; font-size: 1.4rem; } 
+        }
     </style>
     
-    <!-- MAPA DE IMPORTAÇÃO (Para carregar Three.js e Addons) -->
     <script type="importmap">
         {
             "imports": {
@@ -275,9 +287,9 @@
     <button id="menu-toggle">☰ MENU</button>
 
     <div id="sidebar">
-        <div style="text-align: center; margin-bottom: 10px;">
+        <div style="text-align: center; margin-bottom: 20px;">
             <h2 style="color:white; margin:0;">SISTEMA</h2>
-            <p style="font-size: 0.7rem; margin:0;">V15.0 (Ultimate)</p>
+            <p style="font-size: 0.7rem; margin:0;">V15.0 (Mobile Ultimate)</p>
         </div>
 
         <!-- Abas do Menu -->
@@ -328,7 +340,6 @@
                 <button id="saveConfigBtn" class="sidebar-btn" style="border-color: #ffcc00; color: #ffcc00;">💾 Salvar Config Atual</button>
             </div>
 
-            <!-- Efeitos (Simplificados para visualização) -->
             <div class="control-group">
                 <h3>Satélites</h3>
                 <div class="control-row">
@@ -398,6 +409,7 @@
                     </div>
                 </div>
             </div>
+            <div style="height: 50px;"></div> <!-- Espaço extra para scroll -->
         </div>
 
         <!-- CONTEÚDO: BIBLIOTECA -->
@@ -424,6 +436,7 @@
             </div>
             
             <button id="clearDbBtn" class="sidebar-btn" style="border-color:red; color:red; margin-top:20px;">🗑️ Apagar Tudo</button>
+            <div style="height: 50px;"></div>
         </div>
     </div>
 
@@ -441,7 +454,6 @@
         <span id="total-time" class="time-display">0:00</span>
     </div>
 
-    <!-- UI Loading/Error -->
     <div id="loading-container">
         <div id="loading-text">A carregar: 0%</div>
         <div id="loading-bar-bg">
@@ -459,10 +471,6 @@
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
-        /**
-         * MÓDULO 1: BANCO DE DADOS (IndexedDB)
-         * Guarda ficheiros grandes e configurações.
-         */
         const DB_NAME = 'Site3D_DB_v1';
         const DB_VERSION = 1;
 
@@ -471,7 +479,6 @@
                 this.db = null;
                 this.init(onReady);
             }
-
             init(callback) {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
                 request.onupgradeneeded = (event) => {
@@ -487,27 +494,23 @@
                 };
                 request.onerror = (e) => console.error("Erro DB:", e);
             }
-
             saveItem(storeName, item, onSuccess) {
                 if(!this.db) return;
                 const tx = this.db.transaction([storeName], "readwrite");
                 tx.objectStore(storeName).put(item);
                 tx.oncomplete = () => { if(onSuccess) onSuccess(); };
             }
-
             getAllItems(storeName, callback) {
                 if(!this.db) return;
                 const tx = this.db.transaction([storeName], "readonly");
                 const req = tx.objectStore(storeName).getAll();
                 req.onsuccess = () => callback(req.result);
             }
-
             deleteItem(storeName, key, onSuccess) {
                 const tx = this.db.transaction([storeName], "readwrite");
                 tx.objectStore(storeName).delete(key);
                 tx.oncomplete = () => { if(onSuccess) onSuccess(); };
             }
-
             clearAll() {
                 ['audio', 'models', 'configs'].forEach(s => {
                     this.db.transaction([s], "readwrite").objectStore(s).clear();
@@ -517,9 +520,6 @@
             }
         }
 
-        /**
-         * MÓDULO 2: CONFIGURAÇÃO GLOBAL
-         */
         const Config = {
             volume: 0.3,
             mainShape: 'knot',
@@ -539,9 +539,6 @@
             unstableLens: false
         };
 
-        /**
-         * MÓDULO 3: GESTOR DE ÁUDIO
-         */
         class AudioManager {
             constructor(camera) {
                 this.listener = new THREE.AudioListener();
@@ -549,37 +546,26 @@
                 this.sound = new THREE.Audio(this.listener);
                 this.audioLoader = new THREE.AudioLoader();
                 this.analyser = new THREE.AudioAnalyser(this.sound, 256);
-                
-                this.isPlaying = false;
-                this.isPaused = false;
-                this.duration = 0;
-                this.startTime = 0;
-                this.pauseTime = 0;
+                this.isPlaying = false; this.isPaused = false; this.duration = 0; this.startTime = 0; this.pauseTime = 0;
             }
-
             load(url, onProgress, onSuccess) {
                 if (this.listener.context.state === 'suspended') this.listener.context.resume();
-                
                 this.audioLoader.load(url, (buffer) => {
                     if(this.sound.isPlaying) this.sound.stop();
                     this.sound.setBuffer(buffer);
                     this.sound.setLoop(true);
                     this.sound.setVolume(Config.volume);
                     this.play();
-                    
                     this.duration = buffer.duration;
                     if(onSuccess) onSuccess(buffer);
                 }, onProgress);
             }
-
             play() {
                 this.sound.play();
                 this.startTime = this.listener.context.currentTime - this.pauseTime;
                 if(this.sound.offset > 0) this.startTime = this.listener.context.currentTime - this.sound.offset;
-                this.isPlaying = true;
-                this.isPaused = false;
+                this.isPlaying = true; this.isPaused = false;
             }
-
             pause() {
                 if(this.isPlaying) {
                     this.sound.pause();
@@ -587,13 +573,10 @@
                     this.isPaused = true;
                 }
             }
-
             toggle() {
                 if (!this.isPlaying && !this.isPaused) return 'stop';
-                if (this.isPaused) { this.play(); return 'play'; }
-                else { this.pause(); return 'pause'; }
+                if (this.isPaused) { this.play(); return 'play'; } else { this.pause(); return 'pause'; }
             }
-
             seek(time) {
                 if(!this.sound.buffer) return;
                 if(this.sound.isPlaying) this.sound.stop();
@@ -601,48 +584,28 @@
                 this.startTime = this.listener.context.currentTime - time;
                 if(!this.isPaused) this.sound.play();
             }
-
-            getIntensity() {
-                if (this.isPlaying && !this.isPaused) return this.analyser.getAverageFrequency();
-                return 0;
-            }
-
+            getIntensity() { return (this.isPlaying && !this.isPaused) ? this.analyser.getAverageFrequency() : 0; }
             getCurrentTime() {
                 if(!this.isPlaying || this.isPaused) return this.pauseTime || this.sound.offset;
                 let time = this.listener.context.currentTime - this.startTime;
-                if(time >= this.duration) { // Loop correction
-                    this.startTime = this.listener.context.currentTime;
-                    time = 0;
-                }
+                if(time >= this.duration) { this.startTime = this.listener.context.currentTime; time = 0; }
                 return time;
             }
         }
 
-        /**
-         * MÓDULO 4: GESTOR DE CENA 3D
-         */
         class SceneManager {
             constructor() {
                 this.scene = new THREE.Scene();
                 this.scene.fog = new THREE.FogExp2(0x000000, 0.002);
                 this.scene.background = new THREE.Color(0x000000);
-
                 this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                this.baseFOV = 75;
-                this.currentZoom = 35;
-
+                this.baseFOV = 75; this.currentZoom = 35;
                 this.renderer = new THREE.WebGLRenderer({ antialias: true });
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
                 this.renderer.setPixelRatio(window.devicePixelRatio);
                 document.body.appendChild(this.renderer.domElement);
-
-                // Grupos
-                this.mainGroup = new THREE.Group();
-                this.satelliteGroup = new THREE.Group();
-                this.scene.add(this.mainGroup);
-                this.scene.add(this.satelliteGroup);
-
-                // Materiais
+                this.mainGroup = new THREE.Group(); this.satelliteGroup = new THREE.Group();
+                this.scene.add(this.mainGroup); this.scene.add(this.satelliteGroup);
                 this.mainMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff88, wireframe: true, transparent: true, opacity: 0.8 });
                 this.cloneMaterials = [
                     new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending }),
@@ -651,28 +614,18 @@
                     new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending }),
                     new THREE.MeshBasicMaterial({ color: 0x00ff88, wireframe: true, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending })
                 ];
-
-                this.customGeometry = null;
-                this.glitchGhosts = [];
-                this.cubes = [];
-                
-                this.createStars();
-                this.createMainObject();
-                this.updateSatellites();
-
+                this.customGeometry = null; this.glitchGhosts = []; this.cubes = [];
+                this.createStars(); this.createMainObject(); this.updateSatellites();
                 window.addEventListener('resize', () => this.onResize());
             }
-
             createStars() {
-                const pGeo = new THREE.BufferGeometry();
-                const pCount = 2000;
+                const pGeo = new THREE.BufferGeometry(); const pCount = 2000;
                 const pArray = new Float32Array(pCount * 3);
                 for(let i=0; i<pCount*3; i++) pArray[i] = (Math.random()-0.5)*200;
                 pGeo.setAttribute('position', new THREE.BufferAttribute(pArray, 3));
                 this.starMesh = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 0.15, color: 0xffffff }));
                 this.scene.add(this.starMesh);
             }
-
             createMainObject() {
                 while(this.mainGroup.children.length > 0){ 
                     const obj = this.mainGroup.children[0];
@@ -680,193 +633,121 @@
                     this.mainGroup.remove(obj); 
                 }
                 this.glitchGhosts = [];
-
                 let geometry;
-                if (Config.mainShape === 'custom' && this.customGeometry) {
-                    geometry = this.customGeometry;
-                } else if (Config.mainShape === 'crystal') {
-                    geometry = new THREE.IcosahedronGeometry(8, 1);
-                } else if (Config.mainShape === 'sphere') {
-                    geometry = new THREE.SphereGeometry(9, 32, 32);
-                } else {
-                    geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
-                }
-                
+                if (Config.mainShape === 'custom' && this.customGeometry) geometry = this.customGeometry;
+                else if (Config.mainShape === 'crystal') geometry = new THREE.IcosahedronGeometry(8, 1);
+                else if (Config.mainShape === 'sphere') geometry = new THREE.SphereGeometry(9, 32, 32);
+                else geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
                 this.mainMesh = new THREE.Mesh(geometry, this.mainMaterial);
                 this.mainGroup.add(this.mainMesh);
-
-                // 5 Clones para Glitch
                 for(let i=0; i<5; i++) {
                     const ghost = new THREE.Mesh(geometry, this.cloneMaterials[i % this.cloneMaterials.length]);
-                    ghost.visible = false; 
-                    this.mainGroup.add(ghost);
-                    this.glitchGhosts.push(ghost);
+                    ghost.visible = false; this.mainGroup.add(ghost); this.glitchGhosts.push(ghost);
                 }
             }
-
             updateSatellites() {
                 while(this.satelliteGroup.children.length > 0) this.satelliteGroup.remove(this.satelliteGroup.children[0]); 
                 this.cubes = [];
                 const geo = new THREE.BoxGeometry(1, 1, 1);
                 const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-
                 for(let i = 0; i < Config.cubeCount; i++) {
                     const cube = new THREE.Mesh(geo, mat.clone());
-                    const angle = (i / Config.cubeCount) * Math.PI * 2;
-                    const radius = 25; 
+                    const angle = (i / Config.cubeCount) * Math.PI * 2; const radius = 25; 
                     cube.userData = { originalRadius: radius, angle: angle };
                     cube.scale.set(Config.cubeSize, Config.cubeSize, Config.cubeSize);
-                    cube.position.x = Math.cos(angle) * radius;
-                    cube.position.z = Math.sin(angle) * radius;
-                    this.satelliteGroup.add(cube);
-                    this.cubes.push(cube);
+                    cube.position.x = Math.cos(angle) * radius; cube.position.z = Math.sin(angle) * radius;
+                    this.satelliteGroup.add(cube); this.cubes.push(cube);
                 }
             }
-
             loadModel(url, ext, onProgress, onError) {
                 const loader = ext === 'glb' || ext === 'gltf' ? new GLTFLoader() : new OBJLoader();
-                
                 loader.load(url, (object) => {
                     let geometryFound = null;
                     const root = object.scene || object; 
-                    
                     root.traverse((child) => {
                         if (child.isMesh && !geometryFound) {
                             geometryFound = child.geometry;
-                            geometryFound.center();
-                            geometryFound.computeBoundingSphere();
+                            geometryFound.center(); geometryFound.computeBoundingSphere();
                             const scaleFactor = 15 / geometryFound.boundingSphere.radius;
                             geometryFound.scale(scaleFactor, scaleFactor, scaleFactor);
                         }
                     });
-
                     if (geometryFound) {
                         this.customGeometry = geometryFound;
                         Config.mainShape = 'custom';
                         this.createMainObject();
-                    } else {
-                        onError("Nenhuma geometria válida encontrada.");
-                    }
+                    } else { onError("Nenhuma geometria encontrada."); }
                 }, onProgress, onError);
             }
-
             animate(time, rawIntensity, mouseX) {
                 const intensity = rawIntensity * Config.sensitivity;
                 const normalizedIntensity = intensity / 255;
-
-                // 1. Camera & Zoom
                 if (Config.unstableLens && intensity > 50) {
                     const targetFOV = this.baseFOV + (normalizedIntensity * 30);
                     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFOV, 0.2);
-                } else {
-                    this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, this.baseFOV, 0.1);
-                }
+                } else { this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, this.baseFOV, 0.1); }
                 this.camera.updateProjectionMatrix();
-
                 this.currentZoom = THREE.MathUtils.lerp(this.currentZoom, Config.targetZoom, 0.1);
                 this.camera.position.z = this.currentZoom + Math.sin(time * 0.5) * 2;
-
-                // Shake
                 if (Config.enableShake && intensity > 150) {
                     const s = Config.shakeStrength; 
-                    this.camera.position.x = (Math.random() - 0.5) * s;
-                    this.camera.position.y = (Math.random() - 0.5) * s;
+                    this.camera.position.x = (Math.random() - 0.5) * s; this.camera.position.y = (Math.random() - 0.5) * s;
                 } else {
                     this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, 0, 0.1);
                     this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 0, 0.1);
                 }
-
-                // 2. Objeto Principal
                 const pulse = 1 + (normalizedIntensity * 1.5); 
                 const finalScale = Config.mainBaseScale * pulse;
                 this.mainGroup.scale.setScalar(THREE.MathUtils.lerp(this.mainGroup.scale.x, finalScale, 0.2));
-                
                 this.mainGroup.rotation.y += (0.005 + (normalizedIntensity * 0.1)) * Config.rotationSpeed;
                 this.mainGroup.rotation.x += (0.002 + (normalizedIntensity * 0.05)) * Config.rotationSpeed;
-
-                // 3. Efeito Glitch (Scatter)
                 if (Config.glitchIntensity > 0 && intensity > 20) {
                     this.glitchGhosts.forEach((ghost) => {
                         ghost.visible = Math.random() > 0.3; 
                         if(ghost.visible) {
                             const range = (Config.glitchIntensity * intensity) / 50;
-                            ghost.position.set(
-                                (Math.random() - 0.5) * range,
-                                (Math.random() - 0.5) * range * 0.2,
-                                (Math.random() - 0.5) * range * 0.2
-                            );
-                            ghost.scale.set(
-                                1 + (Math.random() * range * 0.1),
-                                1 + (Math.random() - 0.5) * 0.1,
-                                1 + (Math.random() - 0.5) * 0.1
-                            );
+                            ghost.position.set((Math.random() - 0.5) * range, (Math.random() - 0.5) * range * 0.2, (Math.random() - 0.5) * range * 0.2);
+                            ghost.scale.set(1 + (Math.random() * range * 0.1), 1 + (Math.random() - 0.5) * 0.1, 1 + (Math.random() - 0.5) * 0.1);
                         }
                     });
-                } else {
-                    this.glitchGhosts.forEach(g => { g.visible = false; g.position.set(0,0,0); g.scale.set(1,1,1); });
-                }
-
-                // 4. Cores e Strobe
+                } else { this.glitchGhosts.forEach(g => { g.visible = false; g.position.set(0,0,0); g.scale.set(1,1,1); }); }
                 let hue = (time * 0.1 + (intensity * 0.005)) % 1;
                 if (Config.enableStrobe && intensity > Config.strobeThreshold) {
                     hue = Math.random();
-                    if(Math.random() > 0.5) this.scene.background.setHex(0x222222);
-                    else this.scene.background.setHex(0x000000);
-                    
-                    if(Math.random() > 0.7) this.mainMaterial.color.setHex(0xffffff);
-                    else this.mainMaterial.color.setHSL(hue, 1, 0.5);
+                    if(Math.random() > 0.5) this.scene.background.setHex(0x222222); else this.scene.background.setHex(0x000000);
+                    if(Math.random() > 0.7) this.mainMaterial.color.setHex(0xffffff); else this.mainMaterial.color.setHSL(hue, 1, 0.5);
                 } else {
-                    if (intensity > 220) this.scene.background.setHSL(hue, 0.5, 0.1);
-                    else this.scene.background.setHex(0x000000);
+                    if (intensity > 220) this.scene.background.setHSL(hue, 0.5, 0.1); else this.scene.background.setHex(0x000000);
                     this.mainMaterial.color.setHSL(hue, 1, 0.5);
                 }
-
-                // 5. Satélites
                 this.satelliteGroup.rotation.y -= 0.002 * Config.rotationSpeed;
                 this.cubes.forEach((cube, i) => {
-                    cube.rotation.x += 0.02 + normalizedIntensity * 0.1;
-                    cube.rotation.y += 0.02;
+                    cube.rotation.x += 0.02 + normalizedIntensity * 0.1; cube.rotation.y += 0.02;
                     const expansion = cube.userData.originalRadius + (intensity * 0.15 * Config.explodeFactor);
-                    cube.position.x = Math.cos(cube.userData.angle) * expansion;
-                    cube.position.z = Math.sin(cube.userData.angle) * expansion;
+                    cube.position.x = Math.cos(cube.userData.angle) * expansion; cube.position.z = Math.sin(cube.userData.angle) * expansion;
                     cube.position.y = Math.sin(time * 5 + i) * (intensity * 0.05);
-
                     if (Config.enableStrobe && intensity > Config.strobeThreshold) {
-                        if(Math.random() > 0.8) cube.material.color.setHex(0xffffff);
-                        else cube.material.color.setHSL(hue, 0.8, 0.5);
-                    } else {
-                        cube.material.color.setHSL(hue, 0.8, 0.5 + normalizedIntensity * 0.5);
-                    }
+                        if(Math.random() > 0.8) cube.material.color.setHex(0xffffff); else cube.material.color.setHSL(hue, 0.8, 0.5);
+                    } else { cube.material.color.setHSL(hue, 0.8, 0.5 + normalizedIntensity * 0.5); }
                 });
-
-                // 6. Warp Speed
                 this.starMesh.rotation.y += (0.0005 * Config.warpSpeed * (intensity/50 + 1));
-                if (Config.warpSpeed > 5) this.starMesh.scale.y = 1 + (Config.warpSpeed / 5);
-                else this.starMesh.scale.y = 1;
-
+                if (Config.warpSpeed > 5) this.starMesh.scale.y = 1 + (Config.warpSpeed / 5); else this.starMesh.scale.y = 1;
                 this.renderer.render(this.scene, this.camera);
             }
-
             onResize() {
                 this.camera.aspect = window.innerWidth / window.innerHeight;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.camera.updateProjectionMatrix(); this.renderer.setSize(window.innerWidth, window.innerHeight);
             }
         }
 
-        /**
-         * MÓDULO 5: UI MANAGER & LÓGICA PRINCIPAL
-         */
         class UIManager {
             constructor(audioMgr, sceneMgr, dbMgr) {
                 this.audio = audioMgr;
                 this.scene = sceneMgr;
                 this.db = dbMgr;
-                
                 this.currentAudioBlob = null;
                 this.currentModelBlob = null;
                 this.currentModelExt = null;
-
                 this.els = {
                     playBtn: document.getElementById('play-pause-bar'),
                     progressBar: document.getElementById('progress-slider'),
@@ -885,86 +766,61 @@
                     libModelList: document.getElementById('lib-model-list'),
                     libConfigList: document.getElementById('lib-config-list'),
                 };
-
-                this.isDragging = false;
-                this.mouseX = 0;
-
-                this.setupListeners();
-                this.bindConfigInputs();
-                this.setupTabs();
+                this.isDragging = false; this.mouseX = 0;
+                this.setupListeners(); this.bindConfigInputs(); this.setupTabs();
             }
-
             showError(msg) {
                 this.els.loading.style.display = 'none';
                 this.els.err.style.display = 'block';
                 this.els.errText.textContent = msg;
                 setTimeout(() => this.els.err.style.display = 'none', 5000);
             }
-
             formatTime(s) {
                 const m = Math.floor(s/60);
                 const sec = Math.floor(s%60);
                 return `${m}:${sec < 10 ? '0':''}${sec}`;
             }
-
             refreshLibrary() {
-                // Áudios
                 this.db.getAllItems('audio', (items) => {
                     this.els.libAudioList.innerHTML = items.length === 0 ? '<div style="padding:10px; color:#666;">Vazio...</div>' : '';
                     items.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'library-item';
-                        div.innerHTML = `<span>🎵 ${item.name.substring(0, 20)}</span><span class="delete-btn">x</span>`;
+                        const div = document.createElement('div'); div.className = 'library-item';
+                        div.innerHTML = `<span>🎵 ${item.name.substring(0, 20)}</span><span class="delete-btn" data-type="audio" data-key="${item.name}">x</span>`;
                         div.onclick = (e) => {
                             if(e.target.classList.contains('delete-btn')) return;
-                            const url = URL.createObjectURL(item.blob);
-                            this.loadAudioFromURL(url, item.name);
+                            const url = URL.createObjectURL(item.blob); this.loadAudioFromURL(url, item.name);
                         };
-                        div.querySelector('.delete-btn').onclick = () => {
-                            this.db.deleteItem('audio', item.name, () => this.refreshLibrary());
-                        };
+                        div.querySelector('.delete-btn').onclick = () => { this.db.deleteItem('audio', item.name, () => this.refreshLibrary()); };
                         this.els.libAudioList.appendChild(div);
                     });
                 });
-
-                // Modelos
                 this.db.getAllItems('models', (items) => {
                     this.els.libModelList.innerHTML = items.length === 0 ? '<div style="padding:10px; color:#666;">Vazio...</div>' : '';
                     items.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'library-item';
+                        const div = document.createElement('div'); div.className = 'library-item';
                         div.innerHTML = `<span>🧊 ${item.name.substring(0, 20)}</span><span class="delete-btn">x</span>`;
                         div.onclick = (e) => {
                             if(e.target.classList.contains('delete-btn')) return;
-                            const url = URL.createObjectURL(item.blob);
-                            this.loadModelFromURL(url, item.ext, item.name);
+                            const url = URL.createObjectURL(item.blob); this.loadModelFromURL(url, item.ext, item.name);
                         };
-                        div.querySelector('.delete-btn').onclick = () => {
-                            this.db.deleteItem('models', item.name, () => this.refreshLibrary());
-                        };
+                        div.querySelector('.delete-btn').onclick = () => { this.db.deleteItem('models', item.name, () => this.refreshLibrary()); };
                         this.els.libModelList.appendChild(div);
                     });
                 });
-
-                // Configs
                 this.db.getAllItems('configs', (items) => {
                     this.els.libConfigList.innerHTML = items.length === 0 ? '<div style="padding:10px; color:#666;">Vazio...</div>' : '';
                     items.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'library-item';
+                        const div = document.createElement('div'); div.className = 'library-item';
                         div.innerHTML = `<span>⚙️ ${item.name}</span><span class="delete-btn">x</span>`;
                         div.onclick = (e) => {
                             if(e.target.classList.contains('delete-btn')) return;
                             this.applyConfig(item.data);
                         };
-                        div.querySelector('.delete-btn').onclick = () => {
-                            this.db.deleteItem('configs', item.name, () => this.refreshLibrary());
-                        };
+                        div.querySelector('.delete-btn').onclick = () => { this.db.deleteItem('configs', item.name, () => this.refreshLibrary()); };
                         this.els.libConfigList.appendChild(div);
                     });
                 });
             }
-
             applyConfig(data) {
                 Object.keys(data).forEach(key => {
                     Config[key] = data[key];
@@ -973,7 +829,6 @@
                         if(el.type === 'checkbox') el.checked = data[key];
                         else el.value = data[key];
                     }
-                    // Sliders não padronizados
                     if(key === 'targetZoom') document.getElementById('cfg-zoom').value = data[key];
                     if(key === 'shakeStrength') document.getElementById('cfg-shakeStr').value = data[key];
                     if(key === 'strobeThreshold') document.getElementById('cfg-strobeThresh').value = data[key];
@@ -981,17 +836,12 @@
                     if(key === 'warpSpeed') document.getElementById('cfg-warp').value = data[key];
                     if(key === 'mainBaseScale') document.getElementById('cfg-mainSize').value = data[key];
                 });
-                this.scene.updateSatellites();
-                this.scene.createMainObject();
+                this.scene.updateSatellites(); this.scene.createMainObject();
                 this.audio.sound.setVolume(Config.volume);
                 alert("Configuração carregada!");
             }
-
             loadAudioFromURL(url, name) {
-                this.els.loading.style.display = 'block';
-                this.els.loadText.textContent = "A carregar da DB...";
-                this.els.loadBar.style.width = "100%";
-                
+                this.els.loading.style.display = 'block'; this.els.loadText.textContent = "A carregar da DB..."; this.els.loadBar.style.width = "100%";
                 this.audio.load(url, null, (buffer) => {
                     this.els.progressBar.max = buffer.duration;
                     this.els.totalTime.textContent = this.formatTime(buffer.duration);
@@ -1001,23 +851,16 @@
                     this.updatePlayBtn(true);
                 });
             }
-
             loadModelFromURL(url, ext, name) {
-                this.els.loading.style.display = 'block';
-                this.els.loadText.textContent = "A carregar 3D...";
-                this.els.loadBar.style.width = "50%";
-                
+                this.els.loading.style.display = 'block'; this.els.loadText.textContent = "A carregar 3D..."; this.els.loadBar.style.width = "50%";
                 this.scene.loadModel(url, ext, 
                     (xhr) => { if(xhr.lengthComputable) this.els.loadBar.style.width = (xhr.loaded/xhr.total)*100 + '%'; },
                     (err) => { this.showError("Erro 3D"); console.log(err); }
                 );
-                
-                this.els.optCustom.disabled = false;
-                this.els.optCustom.textContent = "Custom: " + name.substring(0,10);
+                this.els.optCustom.disabled = false; this.els.optCustom.textContent = "Custom: " + name.substring(0,10);
                 document.getElementById('cfg-shape').value = 'custom';
                 setTimeout(() => this.els.loading.style.display = 'none', 1000);
             }
-
             setupTabs() {
                 const tabs = document.querySelectorAll('.tab');
                 tabs.forEach(tab => {
@@ -1026,111 +869,88 @@
                         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                         tab.classList.add('active');
                         document.getElementById(tab.dataset.target).classList.add('active');
-                        
                         if(tab.dataset.target === 'library') this.refreshLibrary();
                     });
                 });
             }
-
             setupListeners() {
                 this.els.menuBtn.addEventListener('click', () => {
                     this.els.sidebar.classList.toggle('open');
                     this.els.menuBtn.textContent = this.els.sidebar.classList.contains('open') ? "X FECHAR" : "☰ MENU";
                 });
-
                 document.addEventListener('mousemove', (e) => { this.mouseX = (e.clientX - window.innerWidth/2); });
+                // Touch support for rotation/warp
+                document.addEventListener('touchmove', (e) => {
+                    if(e.touches.length > 0) { this.mouseX = (e.touches[0].clientX - window.innerWidth / 2); }
+                }, { passive: true });
+
                 document.addEventListener('wheel', (e) => {
-                    Config.targetZoom += e.deltaY * 0.05; 
-                    Config.targetZoom = Math.max(10, Math.min(Config.targetZoom, 100));
+                    Config.targetZoom += e.deltaY * 0.05; Config.targetZoom = Math.max(10, Math.min(Config.targetZoom, 100));
                     document.getElementById('cfg-zoom').value = Config.targetZoom;
                 });
-
-                // Upload Audio
                 const upBtn = document.getElementById('uploadBtn');
                 const saveAudioBtn = document.getElementById('saveAudioBtn');
                 const fInput = document.getElementById('fileInput');
-                
                 upBtn.addEventListener('click', () => fInput.click());
                 fInput.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if(!file) return;
-                    this.currentAudioBlob = file; 
-                    const url = URL.createObjectURL(file);
+                    const file = e.target.files[0]; if(!file) return;
+                    this.currentAudioBlob = file; const url = URL.createObjectURL(file);
                     this.loadAudioFromURL(url, file.name);
                 });
-
                 saveAudioBtn.addEventListener('click', () => {
                     if(!this.currentAudioBlob) return alert("Nenhuma música carregada para salvar!");
                     const name = prompt("Nome para salvar a música:", this.els.trackName.textContent);
                     if(name) {
                         this.db.saveItem('audio', { name: name, blob: this.currentAudioBlob }, () => {
-                            alert("Música salva na Biblioteca!");
-                            this.refreshLibrary();
+                            alert("Música salva na Biblioteca!"); this.refreshLibrary();
                         });
                     }
                 });
-
-                // Upload Model
                 const upModel = document.getElementById('uploadModelBtn');
                 const saveModelBtn = document.getElementById('saveModelBtn');
                 const mInput = document.getElementById('modelInput');
-                
                 upModel.addEventListener('click', () => mInput.click());
                 mInput.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if(!file) return;
-                    this.currentModelBlob = file;
-                    this.currentModelExt = file.name.split('.').pop().toLowerCase();
+                    const file = e.target.files[0]; if(!file) return;
+                    this.currentModelBlob = file; this.currentModelExt = file.name.split('.').pop().toLowerCase();
                     const url = URL.createObjectURL(file);
                     this.loadModelFromURL(url, this.currentModelExt, file.name);
                 });
-
                 saveModelBtn.addEventListener('click', () => {
                     if(!this.currentModelBlob) return alert("Nenhum modelo carregado para salvar!");
                     const name = prompt("Nome para salvar o modelo:", "Meu Modelo 3D");
                     if(name) {
                         this.db.saveItem('models', { name: name, blob: this.currentModelBlob, ext: this.currentModelExt }, () => {
-                            alert("Modelo salvo na Biblioteca!");
-                            this.refreshLibrary();
+                            alert("Modelo salvo na Biblioteca!"); this.refreshLibrary();
                         });
                     }
                 });
-
-                // Config Save
                 document.getElementById('saveConfigBtn').addEventListener('click', () => {
                     const name = prompt("Nome para este Preset:", "Minha Config");
                     if(name) {
                         this.db.saveItem('configs', { name: name, data: JSON.parse(JSON.stringify(Config)) }, () => {
-                            alert("Preset salvo!");
-                            this.refreshLibrary();
+                            alert("Preset salvo!"); this.refreshLibrary();
                         });
                     }
                 });
-
                 document.getElementById('clearDbBtn').addEventListener('click', () => {
-                    if(confirm("Tem certeza? Isso apagará tudo.")) this.db.clearAll();
+                    if(confirm("Tem certeza? Isso apagará todas as músicas e modelos salvos.")) this.db.clearAll();
                 });
-
-                // Play/Seek
                 this.els.playBtn.addEventListener('click', () => {
                     const status = this.audio.toggle();
                     this.updatePlayBtn(status === 'play');
                 });
                 this.els.progressBar.addEventListener('input', () => {
-                    this.isDragging = true;
-                    this.els.currTime.textContent = this.formatTime(this.els.progressBar.value);
+                    this.isDragging = true; this.els.currTime.textContent = this.formatTime(this.els.progressBar.value);
                 });
                 this.els.progressBar.addEventListener('change', () => {
-                    this.isDragging = false;
-                    this.audio.seek(parseFloat(this.els.progressBar.value));
+                    this.isDragging = false; this.audio.seek(parseFloat(this.els.progressBar.value));
                 });
             }
-
             updatePlayBtn(isPlaying) {
                 if(isPlaying) { this.els.playBtn.textContent = "||"; this.els.playBtn.classList.remove('paused'); }
                 else { this.els.playBtn.textContent = "▶"; this.els.playBtn.classList.add('paused'); }
             }
-
             updateLoop() {
                 if(!this.isDragging) {
                     const t = this.audio.getCurrentTime();
@@ -1140,7 +960,6 @@
                 this.scene.animate(Date.now() * 0.001, intensity, this.mouseX);
                 requestAnimationFrame(() => this.updateLoop());
             }
-
             bindConfigInputs() {
                 const bind = (id, key, cb) => {
                     const el = document.getElementById(id); if(!el) return;
@@ -1158,27 +977,19 @@
                 bind('cfg-speed', 'rotationSpeed'); bind('cfg-shakeStr', 'shakeStrength');
                 bind('cfg-strobeThresh', 'strobeThreshold'); bind('cfg-glitch', 'glitchIntensity');
                 bind('cfg-warp', 'warpSpeed');
-
                 const shapeEl = document.getElementById('cfg-shape');
                 if(shapeEl) shapeEl.addEventListener('change', (e) => { Config.mainShape = e.target.value; this.scene.createMainObject(); });
-                
                 bind('cfg-zoom', 'targetZoom');
-                
                 const shakeEl = document.getElementById('cfg-shake');
                 if(shakeEl) shakeEl.addEventListener('change', (e) => Config.enableShake = e.target.checked);
-                
                 const strobeEl = document.getElementById('cfg-strobe');
                 if(strobeEl) strobeEl.addEventListener('change', (e) => Config.enableStrobe = e.target.checked);
-                
                 const lensEl = document.getElementById('cfg-lens');
                 if(lensEl) lensEl.addEventListener('change', (e) => Config.unstableLens = e.target.checked);
             }
         }
 
-        // --- BOOT ---
-        const dbMgr = new DatabaseManager(() => {
-            console.log("Sistema Pronto.");
-        });
+        const dbMgr = new DatabaseManager(() => { console.log("Sistema Pronto."); });
         const sceneMgr = new SceneManager();
         const audioMgr = new AudioManager(sceneMgr.camera);
         const uiMgr = new UIManager(audioMgr, sceneMgr, dbMgr);
